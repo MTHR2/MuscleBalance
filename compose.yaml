@@ -1,0 +1,22 @@
+services:
+#  app:
+#    build: .
+#    ports:
+#      - "5433:5432"
+
+
+
+  postgres:
+    image: postgres:17
+    container_name: gymtracker-db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
