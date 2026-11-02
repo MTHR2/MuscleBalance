@@ -1,0 +1,1 @@
+ALTER TABLE exercises RENAME COLUMN is_favorite TO is_favourite;

@@ -26,6 +26,9 @@ public class Exercise {
 
     private String description;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "load_type", nullable = false)
     private LoadType loadType = LoadType.weighted;
@@ -33,8 +36,8 @@ public class Exercise {
     @Column(name = "is_custom", nullable = false)
     private boolean custom = false;
 
-    @Column(name = "is_favorite", nullable = false)
-    private boolean favorite = false;
+    @Column(name = "is_favourite", nullable = false)
+    private boolean favourite = false;
 
     @Column(name = "working_weight", precision = 6, scale = 2)
     private BigDecimal workingWeight;
