@@ -14,13 +14,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** День плана: какая тренировка из библиотеки стоит в этот день недели. Дни без записи = дни отдыха. */
 @Entity
-@Table(name = "plan_workouts",
-        uniqueConstraints = @UniqueConstraint(name = "uq_plan_workouts_day", columnNames = {"plan_id", "day_of_week"}))
+@Table(name = "plan_days",
+        uniqueConstraints = @UniqueConstraint(name = "uq_plan_days_day", columnNames = {"plan_id", "day_of_week"}))
 @Getter
 @Setter
 @NoArgsConstructor
-public class PlanWorkout {
+public class PlanDay {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,8 +31,9 @@ public class PlanWorkout {
     @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
 
-    @Column(nullable = false)
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "workout_template_id", nullable = false)
+    private WorkoutTemplate workoutTemplate;
 
     /** 1 = понедельник ... 7 = воскресенье */
     @Column(name = "day_of_week", nullable = false)
