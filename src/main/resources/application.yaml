@@ -11,3 +11,7 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+server:
+  error:
+    # текст ResponseStatusException попадает в ответ, фронт показывает его пользователю
+    include-message: always
