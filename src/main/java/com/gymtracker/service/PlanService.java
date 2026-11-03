@@ -1,12 +1,15 @@
 package com.gymtracker.service;
 
+import com.gymtracker.dto.plan.MuscleTargetRequestDto;
 import com.gymtracker.dto.plan.PlanDayRequestDto;
 import com.gymtracker.dto.plan.PlanDetailsDto;
 import com.gymtracker.dto.plan.PlanListItemDto;
 import com.gymtracker.dto.plan.SavePlanRequestDto;
+import com.gymtracker.entity.Muscle;
 import com.gymtracker.entity.Plan;
 import com.gymtracker.entity.WorkoutTemplate;
 import com.gymtracker.mapper.PlanMapper;
+import com.gymtracker.repository.MuscleRepository;
 import com.gymtracker.repository.PlanRepository;
 import com.gymtracker.repository.WorkoutTemplateRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class PlanService {
     private final PlanMapper planMapper;
     private final PlanRepository planRepository;
     private final WorkoutTemplateRepository workoutTemplateRepository;
+    private final MuscleRepository muscleRepository;
 
 
     @Transactional(readOnly = true)
@@ -79,7 +83,21 @@ public class PlanService {
         Map<Long, WorkoutTemplate> map = templates.stream().collect(Collectors.
                 toMap(WorkoutTemplate::getId, workoutTemplate -> workoutTemplate));
 
-        var plan = planMapper.toEntity(request, map);
+        List<MuscleTargetRequestDto> targets = request.muscleTargets() != null
+                ? request.muscleTargets() : List.of();
+        List<Short> muscleIds = targets.stream().map(MuscleTargetRequestDto::muscleId).toList();
+        Set<Short> muscleIdSet = new HashSet<>(muscleIds);
+        if (muscleIds.size() != muscleIdSet.size()) {
+            throw new IllegalArgumentException("Две цели на одну мышцу");
+        }
+        List<Muscle> muscleList = muscleRepository.findAllById(muscleIdSet);
+        if (muscleIdSet.size() != muscleList.size()) {
+            throw new IllegalArgumentException("Одна или несколько мышц не найдены");
+        }
+        Map<Short, Muscle> muscles = muscleList.stream()
+                .collect(Collectors.toMap(Muscle::getId, muscle -> muscle));
+
+        var plan = planMapper.toEntity(request, map, muscles);
 
         if (planRepository.count() == 0) {
             plan.setActive(true);

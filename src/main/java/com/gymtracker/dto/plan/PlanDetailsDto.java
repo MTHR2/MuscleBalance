@@ -6,5 +6,7 @@ public record PlanDetailsDto (Long id,
                               String name,
                               String description,
                               boolean active,
-                              List<PlanDayDto> days){
+                              List<PlanDayDto> days,
+                              Short defaultWeeklySets,
+                              List<MuscleTargetDto> muscleTargets){
 }

@@ -40,5 +40,6 @@ public class Plan {
     private List<PlanDay> days = new ArrayList<>();
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id.muscleId")
     private List<PlanMuscleTarget> muscleTargets = new ArrayList<>();
 }
