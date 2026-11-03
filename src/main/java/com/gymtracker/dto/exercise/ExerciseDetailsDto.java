@@ -1,4 +1,4 @@
-package com.gymtracker.dto;
+package com.gymtracker.dto.exercise;
 
 import com.gymtracker.entity.LoadType;
 

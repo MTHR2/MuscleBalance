@@ -1,6 +1,6 @@
 package com.gymtracker.mapper;
 
-import com.gymtracker.dto.*;
+import com.gymtracker.dto.plan.*;
 import com.gymtracker.entity.Plan;
 import com.gymtracker.entity.PlanDay;
 import com.gymtracker.entity.WorkoutTemplate;

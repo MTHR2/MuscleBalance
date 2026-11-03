@@ -1,4 +1,4 @@
-package com.gymtracker.dto;
+package com.gymtracker.dto.workouttemplate;
 
 import java.util.List;
 

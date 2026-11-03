@@ -1,4 +1,4 @@
-package com.gymtracker.dto;
+package com.gymtracker.dto.muscle;
 
 public record MuscleGroupCardDto(Short id,
                                  String name,

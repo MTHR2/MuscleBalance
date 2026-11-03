@@ -1,4 +1,4 @@
-package com.gymtracker.dto;
+package com.gymtracker.dto.plan;
 
 public record PlanListItemDto(Long id,
                               String name,

@@ -1,4 +1,4 @@
-package com.gymtracker.dto;
+package com.gymtracker.dto.plan;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

@@ -1,6 +1,6 @@
 package com.gymtracker.mapper;
 
-import com.gymtracker.dto.MuscleGroupCardDto;
+import com.gymtracker.dto.muscle.MuscleGroupCardDto;
 import com.gymtracker.entity.MuscleGroup;
 import org.springframework.stereotype.Component;
 

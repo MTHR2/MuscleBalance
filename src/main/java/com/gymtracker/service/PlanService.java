@@ -1,9 +1,9 @@
 package com.gymtracker.service;
 
-import com.gymtracker.dto.PlanDayRequestDto;
-import com.gymtracker.dto.PlanDetailsDto;
-import com.gymtracker.dto.PlanListItemDto;
-import com.gymtracker.dto.SavePlanRequestDto;
+import com.gymtracker.dto.plan.PlanDayRequestDto;
+import com.gymtracker.dto.plan.PlanDetailsDto;
+import com.gymtracker.dto.plan.PlanListItemDto;
+import com.gymtracker.dto.plan.SavePlanRequestDto;
 import com.gymtracker.entity.Plan;
 import com.gymtracker.entity.WorkoutTemplate;
 import com.gymtracker.mapper.PlanMapper;

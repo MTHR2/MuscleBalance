@@ -1,8 +1,8 @@
 package com.gymtracker.controller;
 
-import com.gymtracker.dto.PlanDetailsDto;
-import com.gymtracker.dto.PlanListItemDto;
-import com.gymtracker.dto.SavePlanRequestDto;
+import com.gymtracker.dto.plan.PlanDetailsDto;
+import com.gymtracker.dto.plan.PlanListItemDto;
+import com.gymtracker.dto.plan.SavePlanRequestDto;
 import com.gymtracker.service.PlanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
-package com.gymtracker.dto;
+package com.gymtracker.dto.muscle;
 
-public record MuscleItemDto(Long id,
+public record MuscleItemDto(Short id,
                             String name,
                             String imageUrl,
                             Short groupId,

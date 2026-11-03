@@ -1,4 +1,4 @@
-package com.gymtracker.dto;
+package com.gymtracker.dto.plan;
 
 import java.util.List;
 

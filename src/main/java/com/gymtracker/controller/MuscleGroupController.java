@@ -1,6 +1,6 @@
 package com.gymtracker.controller;
 
-import com.gymtracker.dto.MuscleGroupCardDto;
+import com.gymtracker.dto.muscle.MuscleGroupCardDto;
 
 import com.gymtracker.service.MuscleGroupService;
 import lombok.RequiredArgsConstructor;

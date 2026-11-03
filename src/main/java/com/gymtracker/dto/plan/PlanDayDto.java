@@ -1,4 +1,4 @@
-package com.gymtracker.dto;
+package com.gymtracker.dto.plan;
 
 public record PlanDayDto(Short dayOfWeek,
                          Long workoutTemplateId,

@@ -1,8 +1,8 @@
 package com.gymtracker.controller;
 
-import com.gymtracker.dto.CreateWorkoutTemplateRequestDto;
-import com.gymtracker.dto.WorkoutTemplateDetailsDto;
-import com.gymtracker.dto.WorkoutTemplateListItemDto;
+import com.gymtracker.dto.workouttemplate.CreateWorkoutTemplateRequestDto;
+import com.gymtracker.dto.workouttemplate.WorkoutTemplateDetailsDto;
+import com.gymtracker.dto.workouttemplate.WorkoutTemplateListItemDto;
 import com.gymtracker.service.WorkoutTemplateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

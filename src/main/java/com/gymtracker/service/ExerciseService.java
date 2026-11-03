@@ -1,7 +1,7 @@
 package com.gymtracker.service;
 
-import com.gymtracker.dto.ExerciseDetailsDto;
-import com.gymtracker.dto.ExerciseListItemDto;
+import com.gymtracker.dto.exercise.ExerciseDetailsDto;
+import com.gymtracker.dto.exercise.ExerciseListItemDto;
 import com.gymtracker.mapper.ExerciseMapper;
 import com.gymtracker.repository.ExerciseRepository;
 import lombok.RequiredArgsConstructor;

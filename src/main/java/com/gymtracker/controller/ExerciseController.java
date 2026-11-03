@@ -1,8 +1,8 @@
 package com.gymtracker.controller;
 
-import com.gymtracker.dto.ExerciseDetailsDto;
-import com.gymtracker.dto.ExerciseListItemDto;
-import com.gymtracker.dto.ExerciseMuscleDto;
+import com.gymtracker.dto.exercise.ExerciseDetailsDto;
+import com.gymtracker.dto.exercise.ExerciseListItemDto;
+import com.gymtracker.dto.exercise.ExerciseMuscleDto;
 import com.gymtracker.service.ExerciseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
