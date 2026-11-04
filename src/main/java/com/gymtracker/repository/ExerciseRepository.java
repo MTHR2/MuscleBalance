@@ -2,6 +2,7 @@ package com.gymtracker.repository;
 
 
 import com.gymtracker.entity.Exercise;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;
@@ -13,16 +14,29 @@ import java.util.List;
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
-    // упражнения, у которых основная мышца входит в группу; удалённые не показываем
+    // каталог: все фильтры необязательные (null = не фильтровать); удалённые не показываем.
+    // группа: у упражнения есть основная мышца из этой группы. q: подстрока в названии без учёта регистра,
+    // пустая строка совпадает со всем. Мышцы грузим сразу, чтобы не ходить в БД за каждой.
+    @EntityGraph(attributePaths = {"muscles", "muscles.muscle"})
     @Query("""
-            select distinct e from Exercise e
-            join e.muscles em
-            where em.muscle.muscleGroup.id = :muscleGroupId
-              and em.muscleRole = com.gymtracker.entity.MuscleRole.primary
-              and e.archivedAt is null
+            select e from Exercise e
+            where e.archivedAt is null
+              and lower(e.name) like lower(concat('%', :q, '%'))
+              and (cast(:favourite as boolean) is null or e.favourite = :favourite)
+              and (cast(:custom as boolean) is null or e.custom = :custom)
+              and (cast(:groupId as short) is null or exists (
+                    select 1 from ExerciseMuscle em
+                    where em.exercise = e
+                      and em.muscleRole = com.gymtracker.entity.MuscleRole.primary
+                      and em.muscle.muscleGroup.id = :groupId))
             order by e.name
             """)
-    List<Exercise> findByPrimaryMuscleGroup(@Param("muscleGroupId") Short muscleGroupId);
+    List<Exercise> search(@Param("q") String q,
+                          @Param("groupId") Short groupId,
+                          @Param("favourite") Boolean favourite,
+                          @Param("custom") Boolean custom);
 
+    // название занято среди неудалённых (в БД уникальный индекс по lower(name))
+    boolean existsByNameIgnoreCaseAndArchivedAtIsNull(String name);
 
 }

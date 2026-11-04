@@ -2,6 +2,7 @@ package com.gymtracker.dto.exercise;
 
 import com.gymtracker.entity.LoadType;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public record ExerciseListItemDto(Long id,
@@ -10,5 +11,6 @@ public record ExerciseListItemDto(Long id,
                                   LoadType loadType,
                                   boolean favourite,
                                   boolean custom,
+                                  BigDecimal workingWeight,
                                   List<ExerciseMuscleDto> muscles) {
 }

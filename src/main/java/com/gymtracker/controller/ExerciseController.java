@@ -1,10 +1,13 @@
 package com.gymtracker.controller;
 
+import com.gymtracker.dto.exercise.CreateExerciseRequestDto;
 import com.gymtracker.dto.exercise.ExerciseDetailsDto;
 import com.gymtracker.dto.exercise.ExerciseListItemDto;
-import com.gymtracker.dto.exercise.ExerciseMuscleDto;
+import com.gymtracker.dto.exercise.FavouriteRequestDto;
 import com.gymtracker.service.ExerciseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,13 +20,28 @@ public class ExerciseController {
     private final ExerciseService exerciseService;
 
     @GetMapping()
-    public List<ExerciseListItemDto> getExercisesByMuscleGroup (@RequestParam Short muscleGroupId){
-        return exerciseService.getExercisesForMuscleGroup(muscleGroupId);
+    public List<ExerciseListItemDto> getExercises(@RequestParam(required = false) String q,
+                                                  @RequestParam(required = false) Short muscleGroupId,
+                                                  @RequestParam(required = false) Boolean favourite,
+                                                  @RequestParam(required = false) Boolean custom){
+        return exerciseService.getExercises(q, muscleGroupId, favourite, custom);
     }
+
     @GetMapping("/{id}")
     public ExerciseDetailsDto getExerciseDetails(@PathVariable Long id){
         return exerciseService.getExerciseById(id);
     }
 
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ExerciseDetailsDto createExercise(@Valid @RequestBody CreateExerciseRequestDto request){
+        return exerciseService.createExercise(request);
+    }
+
+    @PutMapping("/{id}/favourite")
+    public ExerciseDetailsDto setFavourite(@PathVariable Long id,
+                                           @Valid @RequestBody FavouriteRequestDto request){
+        return exerciseService.setFavourite(id, request.favourite());
+    }
 
 }
