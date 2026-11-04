@@ -5,22 +5,23 @@ import com.gymtracker.dto.plan.PlanDayRequestDto;
 import com.gymtracker.dto.plan.PlanDetailsDto;
 import com.gymtracker.dto.plan.PlanListItemDto;
 import com.gymtracker.dto.plan.SavePlanRequestDto;
+import com.gymtracker.dto.plan.TodayWorkoutDto;
 import com.gymtracker.entity.Muscle;
 import com.gymtracker.entity.Plan;
 import com.gymtracker.entity.WorkoutTemplate;
-import com.gymtracker.dto.workouttemplate.WorkoutTemplateDetailsDto;
 import com.gymtracker.mapper.PlanMapper;
 import com.gymtracker.mapper.WorkoutTemplateMapper;
 import com.gymtracker.repository.MuscleRepository;
 import com.gymtracker.repository.PlanRepository;
+import com.gymtracker.repository.WorkoutRepository;
 import com.gymtracker.repository.WorkoutTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
-
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,42 @@ public class PlanService {
     private final WorkoutTemplateRepository workoutTemplateRepository;
     private final MuscleRepository muscleRepository;
     private final WorkoutTemplateMapper workoutTemplateMapper;
+    private final WorkoutRepository workoutRepository;
 
+    // проверяет дни запроса и загружает тренировки из библиотеки: id -> шаблон
+    private Map<Long, WorkoutTemplate> loadTemplates(SavePlanRequestDto request) {
+        List<Short> daysOfWeek = request.days().stream().map(PlanDayRequestDto::dayOfWeek).toList();
+        Set<Short> daysSet = new HashSet<>(daysOfWeek);
+        if (daysOfWeek.size() != daysSet.size()) {
+            throw new IllegalArgumentException("две записи на dayOfWeek");
+        }
+        Set<Long> templateIdSet = new HashSet<>(request.days()
+                .stream().map(PlanDayRequestDto::workoutTemplateId).toList());
+        List<WorkoutTemplate> templates = workoutTemplateRepository.findAllById(templateIdSet);
+
+        if (templateIdSet.size() != templates.size()) {
+            throw new IllegalArgumentException("Одна или несколько тренировок не найдены");
+        }
+        return templates.stream().collect(Collectors.
+                toMap(WorkoutTemplate::getId, workoutTemplate -> workoutTemplate));
+    }
+
+    // проверяет цели запроса и загружает мышцы: id -> мышца
+    private Map<Short, Muscle> loadMuscles(SavePlanRequestDto request) {
+        List<MuscleTargetRequestDto> targets = request.muscleTargets() != null
+                ? request.muscleTargets() : List.of();
+        List<Short> muscleIds = targets.stream().map(MuscleTargetRequestDto::muscleId).toList();
+        Set<Short> muscleIdSet = new HashSet<>(muscleIds);
+        if (muscleIds.size() != muscleIdSet.size()) {
+            throw new IllegalArgumentException("Две цели на одну мышцу");
+        }
+        List<Muscle> muscleList = muscleRepository.findAllById(muscleIdSet);
+        if (muscleIdSet.size() != muscleList.size()) {
+            throw new IllegalArgumentException("Одна или несколько мышц не найдены");
+        }
+        return muscleList.stream()
+                .collect(Collectors.toMap(Muscle::getId, muscle -> muscle));
+    }
 
     @Transactional(readOnly = true)
     public List<PlanListItemDto> getPlanList() {
@@ -45,16 +81,24 @@ public class PlanService {
         return planRepository.findWithDaysById(planId).map(planMapper::toDetailsDto)
                 .orElseThrow(() -> new NoSuchElementException("something")); // наугад пихнул исключение
     }
-    
+
+    /** Тренировка активного плана на сегодня; пусто, если плана нет или сегодня день отдыха */
     @Transactional(readOnly = true)
-    public Optional<WorkoutTemplateDetailsDto> getTodayWorkout() {
-        short today = (short) LocalDate.now().getDayOfWeek().getValue();
+    public Optional<TodayWorkoutDto> getTodayWorkout() {
+        LocalDate today = LocalDate.now();
+        short dayOfWeek = (short) today.getDayOfWeek().getValue();
+        OffsetDateTime from = today.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime();
+
         return planRepository.findByActiveTrue()
                 .flatMap(plan -> plan.getDays().stream()
-                        .filter(day -> day.getDayOfWeek() == today)
+                        .filter(day -> day.getDayOfWeek() == dayOfWeek)
                         .findFirst())
                 .flatMap(day -> workoutTemplateRepository.findWithExercisesById(day.getWorkoutTemplate().getId()))
-                .map(workoutTemplateMapper::toDetailsDto);
+                .map(template -> {
+                    boolean completedToday = workoutRepository
+                            .countFinishedFromTemplateBetween(template.getId(), from, from.plusDays(1)) > 0;
+                    return planMapper.toTodayDto(workoutTemplateMapper.toDetailsDto(template), completedToday);
+                });
     }
 
     @Transactional
@@ -82,37 +126,10 @@ public class PlanService {
         if (planRepository.existsByNameIgnoreCase(request.name())) {
             throw new IllegalArgumentException("План с таким именем существует");
         }
-        List<Short> daysOfWeek = request.days().stream().map(PlanDayRequestDto::dayOfWeek).toList();
-        Set<Short> daysSet = new HashSet<>(daysOfWeek);
-        if (daysOfWeek.size() != daysSet.size()) {
-            throw new IllegalArgumentException("две записи на dayOfWeek");
-        }
-        Set<Long> templateIdSet = new HashSet<>(request.days()
-                .stream().map(PlanDayRequestDto::workoutTemplateId).toList());
-        List<WorkoutTemplate> templates = workoutTemplateRepository.findAllById(templateIdSet);
+        Map<Long, WorkoutTemplate> templates = loadTemplates(request);
+        Map<Short, Muscle> muscles = loadMuscles(request);
 
-        if (templateIdSet.size() != templates.size()) {
-            throw new IllegalArgumentException("Одна или несколько тренировок не найдены");
-        }
-
-        Map<Long, WorkoutTemplate> map = templates.stream().collect(Collectors.
-                toMap(WorkoutTemplate::getId, workoutTemplate -> workoutTemplate));
-
-        List<MuscleTargetRequestDto> targets = request.muscleTargets() != null
-                ? request.muscleTargets() : List.of();
-        List<Short> muscleIds = targets.stream().map(MuscleTargetRequestDto::muscleId).toList();
-        Set<Short> muscleIdSet = new HashSet<>(muscleIds);
-        if (muscleIds.size() != muscleIdSet.size()) {
-            throw new IllegalArgumentException("Две цели на одну мышцу");
-        }
-        List<Muscle> muscleList = muscleRepository.findAllById(muscleIdSet);
-        if (muscleIdSet.size() != muscleList.size()) {
-            throw new IllegalArgumentException("Одна или несколько мышц не найдены");
-        }
-        Map<Short, Muscle> muscles = muscleList.stream()
-                .collect(Collectors.toMap(Muscle::getId, muscle -> muscle));
-
-        var plan = planMapper.toEntity(request, map, muscles);
+        var plan = planMapper.toEntity(request, templates, muscles);
 
         if (planRepository.count() == 0) {
             plan.setActive(true);
@@ -120,7 +137,24 @@ public class PlanService {
         var saved = planRepository.save(plan);
 
         return planMapper.toDetailsDto(saved);
+    }
 
+    /** Изменение плана влияет только на будущие тренировки: начатые и завершённые хранят свою копию упражнений */
+    @Transactional
+    public PlanDetailsDto updatePlan(Long id, SavePlanRequestDto request) {
+        Plan plan = planRepository.findWithDaysById(id)
+                .orElseThrow(() -> new NoSuchElementException("нет плана"));
+        // имя занято другим планом (смена регистра у самого себя не в счёт)
+        if (!plan.getName().equalsIgnoreCase(request.name())
+                && planRepository.existsByNameIgnoreCase(request.name())) {
+            throw new IllegalArgumentException("План с таким именем существует");
+        }
+        Map<Long, WorkoutTemplate> templates = loadTemplates(request);
+        Map<Short, Muscle> muscles = loadMuscles(request);
+
+        planMapper.updateEntity(plan, request, templates, muscles);
+        planRepository.flush();
+        return planMapper.toDetailsDto(plan);
     }
 
 }

@@ -3,7 +3,7 @@ package com.gymtracker.controller;
 import com.gymtracker.dto.plan.PlanDetailsDto;
 import com.gymtracker.dto.plan.PlanListItemDto;
 import com.gymtracker.dto.plan.SavePlanRequestDto;
-import com.gymtracker.dto.workouttemplate.WorkoutTemplateDetailsDto;
+import com.gymtracker.dto.plan.TodayWorkoutDto;
 import com.gymtracker.service.PlanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class PlanController {
 
 
     @GetMapping("/active/today")
-    public ResponseEntity<WorkoutTemplateDetailsDto> getTodayWorkout(){
+    public ResponseEntity<TodayWorkoutDto> getTodayWorkout(){
         return planService.getTodayWorkout()
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());
@@ -42,6 +42,11 @@ public class PlanController {
     @ResponseStatus(HttpStatus.CREATED)
     public PlanDetailsDto createPlan(@Valid @RequestBody SavePlanRequestDto request){
         return planService.createPlan(request);
+    }
+
+    @PutMapping("/{id}")
+    public PlanDetailsDto updatePlan(@PathVariable Long id, @Valid @RequestBody SavePlanRequestDto request){
+        return planService.updatePlan(id, request);
     }
 
     @PatchMapping("/{id}/activate")
