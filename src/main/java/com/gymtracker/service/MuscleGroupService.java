@@ -15,7 +15,7 @@ public class MuscleGroupService {
     private final MuscleGroupMapper muscleGroupMapper;
 
     public List<MuscleGroupCardDto> getAllMuscleGroups(){
-        return muscleGroupRepository.findAll().
+        return muscleGroupRepository.findAllByOrderBySortOrderAsc().
                 stream().map(muscleGroupMapper::toMuscleGroupCardDto).toList();
     }
     public MuscleGroupCardDto getMuscleGroupById(Short muscleGroupId){
