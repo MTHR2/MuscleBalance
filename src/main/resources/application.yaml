@@ -9,6 +9,10 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        # ленивые коллекции грузятся пачками (подходы в истории тренировок без запроса на каждую)
+        default_batch_fetch_size: 50
   flyway:
     enabled: true
 server:

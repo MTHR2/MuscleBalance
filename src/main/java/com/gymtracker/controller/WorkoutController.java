@@ -6,6 +6,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,6 +21,16 @@ public class WorkoutController {
     @ResponseStatus(HttpStatus.CREATED)
     public WorkoutDetailsDto startWorkout(@Valid @RequestBody StartWorkoutRequestDto request) {
         return workoutService.startWorkout(request);
+    }
+
+    // история завершённых тренировок; finished=false не поддерживается (идущая тренировка: GET /active)
+    @GetMapping
+    public List<WorkoutSummaryDto> getFinishedWorkouts(@RequestParam(defaultValue = "true") boolean finished,
+                                                       @RequestParam(defaultValue = "50") int limit) {
+        if (!finished) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поддерживается только finished=true");
+        }
+        return workoutService.getFinishedWorkouts(Math.min(Math.max(limit, 1), 200));
     }
 
     @GetMapping("/active")
@@ -41,6 +54,12 @@ public class WorkoutController {
     @ResponseStatus(HttpStatus.CREATED)
     public WorkoutExerciseDto addExercise(@PathVariable Long id, @Valid @RequestBody AddWorkoutExerciseRequestDto request) {
         return workoutService.addExercise(id, request);
+    }
+
+    @DeleteMapping("/{id}/exercises/{workoutExerciseId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteExercise(@PathVariable Long id, @PathVariable Long workoutExerciseId) {
+        workoutService.deleteExercise(id, workoutExerciseId);
     }
 
     @PatchMapping("/{id}/exercises/{workoutExerciseId}")

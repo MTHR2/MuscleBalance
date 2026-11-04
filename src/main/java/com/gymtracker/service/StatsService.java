@@ -28,6 +28,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class StatsService {
     private static final double SECONDARY_COEFFICIENT = 0.5;
+    private static final Short DEFAULT_WEEKLY_SETS = 10;
 
     private final StatsMapper statsMapper;
     private final WorkoutRepository workoutRepository;
@@ -71,7 +72,9 @@ public class StatsService {
         }
 
         Map<Short, Short> targets = muscleTargets(plan);
-        Short defaultTarget = plan != null ? plan.getDefaultWeeklySets() : null;
+        // нет плана или общей цели: считаем по цели по умолчанию, чтобы карта и процент недели совпадали
+        Short defaultTarget = plan != null && plan.getDefaultWeeklySets() != null
+                ? plan.getDefaultWeeklySets() : DEFAULT_WEEKLY_SETS;
 
         List<Muscle> muscles = muscleRepository.findAllByOrderByMuscleGroup_SortOrderAscSortOrderAsc();
         return muscles.stream()

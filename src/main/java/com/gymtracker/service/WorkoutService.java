@@ -8,12 +8,14 @@ import com.gymtracker.repository.ExerciseRepository;
 import com.gymtracker.repository.WorkoutRepository;
 import com.gymtracker.repository.WorkoutTemplateRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -123,13 +125,39 @@ public class WorkoutService {
 
         Exercise exercise = exerciseRepository.findById(request.exerciseId())
                 .orElseThrow(() -> new NoSuchElementException("упражнение не найдено"));
-        short sortOrder = (short) workout.getExercises().size();
+        // следующий после последнего, а не size(): после удаления упражнения из середины номера бы совпали
+        short sortOrder = (short) (workout.getExercises().stream()
+                .mapToInt(WorkoutExercise::getSortOrder).max().orElse(-1) + 1);
         Short targetSets = request.targetSets() != null ? request.targetSets() : (short) 3;
 
         WorkoutExercise wExercise = workoutMapper.createExercise(workout, exercise, targetSets, sortOrder);
         workout.getExercises().add(wExercise);
         workoutRepository.flush();
         return workoutMapper.toExerciseDto(wExercise);
+    }
+
+    // убирает упражнение из идущей тренировки вместе с его подходами (orphanRemoval)
+    @Transactional
+    public void deleteExercise(Long workoutId, Long wExerciseId) {
+        Workout workout = getOpenWorkout(workoutId);
+        WorkoutExercise wE = findWorkoutExercise(workout, wExerciseId);
+        workout.getExercises().remove(wE);
+    }
+
+    // история: завершённые тренировки с итогами, свежие первыми
+    @Transactional(readOnly = true)
+    public List<WorkoutSummaryDto> getFinishedWorkouts(int limit) {
+        return workoutRepository.findByFinishedAtIsNotNullOrderByFinishedAtDesc(PageRequest.of(0, limit))
+                .stream().map(this::toSummary).toList();
+    }
+
+    private WorkoutSummaryDto toSummary(Workout workout) {
+        int completedSets = 0;
+        for (WorkoutExercise we : workout.getExercises()) {
+            completedSets += countWorkingSets(we);
+        }
+        long duration = Duration.between(workout.getStartedAt(), workout.getFinishedAt()).getSeconds();
+        return workoutMapper.toSummaryDto(workout, duration, calculateCompletionPercent(workout), completedSets);
     }
 
     @Transactional
