@@ -3,10 +3,12 @@ package com.gymtracker.controller;
 import com.gymtracker.dto.plan.PlanDetailsDto;
 import com.gymtracker.dto.plan.PlanListItemDto;
 import com.gymtracker.dto.plan.SavePlanRequestDto;
+import com.gymtracker.dto.workouttemplate.WorkoutTemplateDetailsDto;
 import com.gymtracker.service.PlanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +23,14 @@ public class PlanController {
     @GetMapping
     public List<PlanListItemDto> getListOfPlans(){
         return planService.getPlanList();
+    }
+
+
+    @GetMapping("/active/today")
+    public ResponseEntity<WorkoutTemplateDetailsDto> getTodayWorkout(){
+        return planService.getTodayWorkout()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping("/{id}")
@@ -38,12 +48,6 @@ public class PlanController {
     public PlanDetailsDto activatePlan(@PathVariable Long id){
         return planService.activatePlan(id);
     }
-
-
-
-
-
-
 
 
 

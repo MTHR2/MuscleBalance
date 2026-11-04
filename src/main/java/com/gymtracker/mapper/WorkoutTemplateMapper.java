@@ -15,6 +15,7 @@ public class WorkoutTemplateMapper {
             WorkoutTemplateExercise workoutTemplateExercise){
         return new WorkoutTemplateExerciseDto(
                 workoutTemplateExercise.getExercise().getId(), workoutTemplateExercise.getExercise().getName(),
+                workoutTemplateExercise.getExercise().getImageUrl(),
                 workoutTemplateExercise.getSortOrder(), workoutTemplateExercise.getTargetSets(),
                 workoutTemplateExercise.getRepsMin(), workoutTemplateExercise.getRepsMax());
     }

@@ -8,7 +8,9 @@ import com.gymtracker.dto.plan.SavePlanRequestDto;
 import com.gymtracker.entity.Muscle;
 import com.gymtracker.entity.Plan;
 import com.gymtracker.entity.WorkoutTemplate;
+import com.gymtracker.dto.workouttemplate.WorkoutTemplateDetailsDto;
 import com.gymtracker.mapper.PlanMapper;
+import com.gymtracker.mapper.WorkoutTemplateMapper;
 import com.gymtracker.repository.MuscleRepository;
 import com.gymtracker.repository.PlanRepository;
 import com.gymtracker.repository.WorkoutTemplateRepository;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +31,7 @@ public class PlanService {
     private final PlanRepository planRepository;
     private final WorkoutTemplateRepository workoutTemplateRepository;
     private final MuscleRepository muscleRepository;
+    private final WorkoutTemplateMapper workoutTemplateMapper;
 
 
     @Transactional(readOnly = true)
@@ -40,6 +44,17 @@ public class PlanService {
     public PlanDetailsDto getPlan(Long planId) {
         return planRepository.findWithDaysById(planId).map(planMapper::toDetailsDto)
                 .orElseThrow(() -> new NoSuchElementException("something")); // наугад пихнул исключение
+    }
+    
+    @Transactional(readOnly = true)
+    public Optional<WorkoutTemplateDetailsDto> getTodayWorkout() {
+        short today = (short) LocalDate.now().getDayOfWeek().getValue();
+        return planRepository.findByActiveTrue()
+                .flatMap(plan -> plan.getDays().stream()
+                        .filter(day -> day.getDayOfWeek() == today)
+                        .findFirst())
+                .flatMap(day -> workoutTemplateRepository.findWithExercisesById(day.getWorkoutTemplate().getId()))
+                .map(workoutTemplateMapper::toDetailsDto);
     }
 
     @Transactional
