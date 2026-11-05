@@ -1,0 +1,197 @@
+.heatmap {
+  position: relative;
+  width: 100%;
+}
+
+.heatmap__views {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.heatmap__view {
+  flex: 0 1 230px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.heatmap__svg {
+  width: 100%;
+  height: auto;
+}
+
+.heatmap__muscle {
+  stroke: #ffffff;
+  stroke-width: 0.15;
+  stroke-linejoin: round;
+}
+
+.heatmap__muscle--tracked {
+  cursor: pointer;
+  transition: filter 0.12s;
+}
+
+.heatmap__muscle--active {
+  filter: brightness(0.88);
+  stroke: var(--text);
+  stroke-width: 0.3;
+}
+
+.heatmap__caption {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.heatmap__tooltip {
+  position: absolute;
+  z-index: 3;
+  transform: translate(14px, 14px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 170px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--text);
+  color: #fff;
+  font-size: 14px;
+  pointer-events: none;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.heatmap__tooltip strong {
+  font-size: 15px;
+}
+
+.heatmap__tooltip-muted {
+  color: #c9c9c9;
+}
+
+.heatmap__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.heatmap__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.heatmap__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+/* прототип карты поверх рисунка (PictureHeatmap), сейчас не подключён */
+.picture-heatmap__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.picture-heatmap__tint {
+  mix-blend-mode: color;
+}
+
+.picture-heatmap__hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  cursor: pointer;
+}
+
+.picture-heatmap__hit--active {
+  fill: rgba(0, 0, 0, 0.12);
+  stroke: #2b2b2b;
+}
+
+/* --- недобитые мышцы --- */
+
+.undertrained__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.undertrained__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.undertrained__count {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.undertrained__list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.undertrained__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.undertrained__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.undertrained__name {
+  flex: 1;
+  font-weight: 800;
+}
+
+.undertrained__sets {
+  color: var(--text-muted);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.undertrained__link {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.undertrained__more {
+  margin-top: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.undertrained__done {
+  margin: 12px 0 0;
+  color: var(--ok-ink);
+  font-weight: 700;
+}

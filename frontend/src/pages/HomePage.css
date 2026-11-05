@@ -1,0 +1,260 @@
+.home {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.home__map {
+  flex: 999 1 560px;
+  min-width: 0;
+}
+
+.home__map-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.home__title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.home__week {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.home__demo {
+  margin-top: 6px;
+}
+
+.home__map .heatmap {
+  margin-top: 20px;
+}
+
+.home__side {
+  flex: 1 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.home__tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.tile__value {
+  font-size: 26px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.tile__label {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* --- «Сегодня по плану» --- */
+
+.today {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 22px;
+  border-radius: 24px;
+  background: var(--text);
+  color: #fff;
+}
+
+.today__label {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.today__title {
+  margin: 12px 0 4px;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.today__muted {
+  margin: 0;
+  color: #c9c9c9;
+}
+
+.today__thumbs {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.today__thumbs li {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.today__thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* упражнение без картинки — короткое название вместо миниатюры */
+.today__thumb-name {
+  padding: 2px;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.today__thumbs .today__thumb-more {
+  background: #333336;
+  color: #fff;
+  font-weight: 800;
+}
+
+.today__start {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  margin-top: 18px;
+  border: none;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-weight: 900;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.today__start:hover {
+  color: var(--text);
+  opacity: 0.9;
+}
+
+.today__start:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.today__alt {
+  align-self: center;
+  margin-top: 10px;
+  color: #c9c9c9;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.today__alt:hover {
+  color: #fff;
+}
+
+.today__error {
+  margin: 10px 0 0;
+  color: #ffb4ae;
+  font-weight: 700;
+}
+
+.today__label--done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ok-ink);
+}
+
+.today__done {
+  margin: 16px 0 0;
+  font-weight: 700;
+}
+
+.today__again {
+  align-self: stretch;
+  min-height: 46px;
+  margin-top: 14px;
+  border: 1px solid #4a4a4d;
+  border-radius: 14px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.today__again:hover:not(:disabled) {
+  background: #2c2c2f;
+}
+
+.today__again:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* --- переключение недель --- */
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.week-nav__btn {
+  width: 36px;
+  height: 36px;
+}
+
+.week-nav .home__week {
+  min-width: 140px;
+  text-align: center;
+}
+
+.week-nav__arrow {
+  display: inline-flex;
+}
+
+.week-nav__arrow--prev {
+  transform: rotate(90deg);
+}
+
+.week-nav__arrow--next {
+  transform: rotate(-90deg);
+}

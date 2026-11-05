@@ -1,0 +1,93 @@
+.exercise-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.exercise-form__fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.exercise-form__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.exercise-form__hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.exercise-form__groups {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.exercise-form__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.exercise-form__group-name {
+  font-weight: 900;
+}
+
+.exercise-form__muscle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.exercise-form__muscle-name {
+  font-weight: 700;
+}
+
+.exercise-form__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* переключатель из трёх кнопок: нет / основная / вспомогательная */
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--chip);
+}
+
+.segmented__item {
+  min-width: 40px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.segmented__item--on {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.segmented__item--primary {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}

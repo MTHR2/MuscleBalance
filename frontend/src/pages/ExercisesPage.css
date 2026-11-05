@@ -1,0 +1,122 @@
+.exercises__title {
+  flex: 1 1 auto;
+}
+
+.search {
+  flex: 0 1 320px;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--text-muted);
+}
+
+.search:focus-within {
+  border-color: #b9b9b4;
+}
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.exercises__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.group-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.group-tile:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+  transform: translateY(-2px);
+}
+
+.group-tile--selected {
+  border: 2px solid var(--accent);
+  padding: 9px;
+  background: #fff6f5;
+}
+
+.group-tile__image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.group-tile__placeholder {
+  display: block;
+  background: var(--surface);
+}
+
+.group-tile__name {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 900;
+}
+
+.group-tile__count {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.exercises__list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin: 32px 0 12px;
+}
+
+.exercises__list-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.exercises__list-meta {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.exercise-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
