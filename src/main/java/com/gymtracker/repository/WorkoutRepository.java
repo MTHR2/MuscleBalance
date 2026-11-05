@@ -28,9 +28,6 @@ public interface WorkoutRepository extends JpaRepository<Workout, Long> {
     @EntityGraph(attributePaths = {"exercises", "exercises.exercise"})
     Optional<Workout> findWithExercisesById(Long id);
 
-    // статистика: неделя это окно [from, to) по началу тренировки; считаются рабочие подходы
-    // и завершённых, и идущей тренировки (карта обновляется по ходу), по одной строке на пару
-    // (мышца, роль), коэффициенты применяет сервис
     @Query("""
             select new com.gymtracker.dto.stats.MuscleLoadRow(m.id, em.muscleRole, count(s), sum(s.reps))
             from Workout w
@@ -41,10 +38,12 @@ public interface WorkoutRepository extends JpaRepository<Workout, Long> {
               join em.muscle m
             where w.startedAt >= :from and w.startedAt < :to
               and s.warmup = false
+              and (:finishedOnly = false or w.finishedAt is not null)
             group by m.id, em.muscleRole
             """)
     List<MuscleLoadRow> findMuscleLoad(@Param("from") OffsetDateTime from,
-                                       @Param("to") OffsetDateTime to);
+                                       @Param("to") OffsetDateTime to,
+                                       @Param("finishedOnly") boolean finishedOnly);
 
     // сколько тренировок завершено за окно
     @Query("""

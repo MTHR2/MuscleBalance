@@ -11,15 +11,12 @@ import com.gymtracker.mapper.StatsMapper;
 import com.gymtracker.repository.MuscleRepository;
 import com.gymtracker.repository.PlanRepository;
 import com.gymtracker.repository.WorkoutRepository;
+import com.gymtracker.service.TimeWindows.Window;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,54 +31,57 @@ public class StatsService {
     private final WorkoutRepository workoutRepository;
     private final MuscleRepository muscleRepository;
     private final PlanRepository planRepository;
+    private final TimeWindows timeWindows;
 
+    private record MuscleLoad(double sets, double reps) {
+        static final MuscleLoad NONE = new MuscleLoad(0, 0);
 
-    private record Week(OffsetDateTime from, OffsetDateTime to) {
-    }
-
-    private Week resolveWeek(LocalDate weekStart) {
-        LocalDate date = weekStart != null ? weekStart : LocalDate.now();
-        LocalDate monday = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        OffsetDateTime from = monday.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime();
-        return new Week(from, from.plusDays(7));
+        MuscleLoad plus(MuscleLoad other) {
+            return new MuscleLoad(sets + other.sets, reps + other.reps);
+        }
     }
 
     private double coefficient(MuscleRole role) {
         return role == MuscleRole.primary ? 1.0 : SECONDARY_COEFFICIENT;
     }
 
-
-    private Map<Short, Short> muscleTargets(Plan plan) {
-        Map<Short, Short> targets = new HashMap<>();
-        if (plan == null) {
-            return targets;
+    private Map<Short, MuscleLoad> loadByMuscle(Window window, boolean finishedOnly) {
+        Map<Short, MuscleLoad> load = new HashMap<>();
+        for (MuscleLoadRow row : workoutRepository.findMuscleLoad(window.from(), window.to(), finishedOnly)) {
+            double k = coefficient(row.role());
+            load.merge(row.muscleId(), new MuscleLoad(row.sets() * k, row.reps() * k), MuscleLoad::plus);
         }
-        for (PlanMuscleTarget target : plan.getMuscleTargets()) {
-            targets.put(target.getId().getMuscleId(), target.getWeeklySets());
-        }
-        return targets;
+        return load;
     }
 
-    private List<MuscleStatsDto> buildMuscleStats(Week week, Plan plan) {
-        Map<Short, Double> setsByMuscle = new HashMap<>();
-        Map<Short, Double> repsByMuscle = new HashMap<>();
-        for (MuscleLoadRow row : workoutRepository.findMuscleLoad(week.from(), week.to())) {
-            double k = coefficient(row.role());
-            setsByMuscle.merge(row.muscleId(), row.sets() * k, Double::sum);
-            repsByMuscle.merge(row.muscleId(), row.reps() * k, Double::sum);
+    private Map<Short, Short> weeklyTargets(Plan plan, List<Muscle> muscles) {
+        Map<Short, Short> own = new HashMap<>();
+        if (plan != null) {
+            for (PlanMuscleTarget target : plan.getMuscleTargets()) {
+                own.put(target.getId().getMuscleId(), target.getWeeklySets());
+            }
         }
-
-        Map<Short, Short> targets = muscleTargets(plan);
         // нет плана или общей цели: считаем по цели по умолчанию, чтобы карта и процент недели совпадали
         Short defaultTarget = plan != null && plan.getDefaultWeeklySets() != null
                 ? plan.getDefaultWeeklySets() : DEFAULT_WEEKLY_SETS;
 
+        Map<Short, Short> targets = new HashMap<>();
+        for (Muscle m : muscles) {
+            targets.put(m.getId(), own.getOrDefault(m.getId(), defaultTarget));
+        }
+        return targets;
+    }
+
+    private List<MuscleStatsDto> buildMuscleStats(Window week, Plan plan) {
+        Map<Short, MuscleLoad> load = loadByMuscle(week, false);
         List<Muscle> muscles = muscleRepository.findAllByOrderByMuscleGroup_SortOrderAscSortOrderAsc();
+        Map<Short, Short> targets = weeklyTargets(plan, muscles);
+
         return muscles.stream()
-                .map(m -> statsMapper.toMuscleStatsDto(m,
-                        setsByMuscle.getOrDefault(m.getId(), 0.0),
-                        repsByMuscle.getOrDefault(m.getId(), 0.0),
-                        targets.getOrDefault(m.getId(), defaultTarget)))
+                .map(m -> {
+                    MuscleLoad l = load.getOrDefault(m.getId(), MuscleLoad.NONE);
+                    return statsMapper.toMuscleStatsDto(m, l.sets(), l.reps(), targets.get(m.getId()));
+                })
                 .toList();
     }
 
@@ -104,12 +104,12 @@ public class StatsService {
     @Transactional(readOnly = true)
     public List<MuscleStatsDto> getMuscleStats(LocalDate weekStart) {
         Plan plan = planRepository.findByActiveTrue().orElse(null);
-        return buildMuscleStats(resolveWeek(weekStart), plan);
+        return buildMuscleStats(timeWindows.week(weekStart), plan);
     }
 
     @Transactional(readOnly = true)
     public WeekSummaryDto getWeekSummary(LocalDate weekStart) {
-        Week week = resolveWeek(weekStart);
+        Window week = timeWindows.week(weekStart);
         Plan plan = planRepository.findByActiveTrue().orElse(null);
 
         int workoutsDone = (int) workoutRepository.countFinishedBetween(week.from(), week.to());

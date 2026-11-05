@@ -19,9 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,6 +31,7 @@ public class PlanService {
     private final MuscleRepository muscleRepository;
     private final WorkoutTemplateMapper workoutTemplateMapper;
     private final WorkoutRepository workoutRepository;
+    private final TimeWindows timeWindows;
 
     // проверяет дни запроса и загружает тренировки из библиотеки: id -> шаблон
     private Map<Long, WorkoutTemplate> loadTemplates(SavePlanRequestDto request) {
@@ -85,9 +83,8 @@ public class PlanService {
     /** Тренировка активного плана на сегодня; пусто, если плана нет или сегодня день отдыха */
     @Transactional(readOnly = true)
     public Optional<TodayWorkoutDto> getTodayWorkout() {
-        LocalDate today = LocalDate.now();
-        short dayOfWeek = (short) today.getDayOfWeek().getValue();
-        OffsetDateTime from = today.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime();
+        TimeWindows.Window today = timeWindows.day(null);
+        short dayOfWeek = (short) today.firstDay().getDayOfWeek().getValue();
 
         return planRepository.findByActiveTrue()
                 .flatMap(plan -> plan.getDays().stream()
@@ -96,7 +93,7 @@ public class PlanService {
                 .flatMap(day -> workoutTemplateRepository.findWithExercisesById(day.getWorkoutTemplate().getId()))
                 .map(template -> {
                     boolean completedToday = workoutRepository
-                            .countFinishedFromTemplateBetween(template.getId(), from, from.plusDays(1)) > 0;
+                            .countFinishedFromTemplateBetween(template.getId(), today.from(), today.to()) > 0;
                     return planMapper.toTodayDto(workoutTemplateMapper.toDetailsDto(template), completedToday);
                 });
     }
