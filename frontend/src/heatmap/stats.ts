@@ -27,16 +27,15 @@ export function formatSets(n: number) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',')
 }
 
-// пять ступеней от красного (0) до зелёного (цель); соседние отличаются и яркостью, не только оттенком
 export const HEAT_STEPS = [
-  { upTo: 0.2, color: '#E2463C', label: '0–20%' },
-  { upTo: 0.4, color: '#EE8A3C', label: '20–40%' },
-  { upTo: 0.65, color: '#F2B544', label: '40–65%' },
-  { upTo: 1, color: '#9CC25A', label: '65–99%' },
-  { upTo: Infinity, color: '#3FA66B', label: 'цель' },
+  { upTo: 0.0001, color: '#C2C8D6', label: '0%' },
+  { upTo: 0.34, color: '#D4E0FF', label: 'до 33%' },
+  { upTo: 0.67, color: '#91AFFF', label: 'до 66%' },
+  { upTo: 1, color: '#4D7BFF', label: 'до 99%' },
+  { upTo: Infinity, color: '#1F3FAF', label: 'цель' },
 ]
-export const SKIPPED_COLOR = '#D6D6D2' // мышцу в плане не качаем
-export const NEUTRAL_COLOR = '#EDEDEA' // область без мышцы из справочника
+export const SKIPPED_COLOR = '#E4E7EA'
+export const NEUTRAL_COLOR = '#F0F1F3'
 
 export function heatColor(ratio: number) {
   return HEAT_STEPS.find((s) => ratio < s.upTo)!.color

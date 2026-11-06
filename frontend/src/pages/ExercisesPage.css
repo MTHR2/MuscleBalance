@@ -17,7 +17,7 @@
 }
 
 .search:focus-within {
-  border-color: #b9b9b4;
+  border-color: var(--line-strong);
 }
 
 .search__input {
@@ -65,9 +65,9 @@
 }
 
 .group-tile--selected {
-  border: 2px solid var(--accent);
+  border: 2px solid var(--accent-ink);
   padding: 9px;
-  background: #fff6f5;
+  background: var(--accent-soft);
 }
 
 .group-tile__image {

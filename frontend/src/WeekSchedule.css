@@ -20,7 +20,7 @@
 
 .week__day--rest {
   border-style: dashed;
-  background: #fafafa;
+  background: var(--surface);
 }
 
 .week__label {

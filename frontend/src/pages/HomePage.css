@@ -60,7 +60,8 @@
   gap: 2px;
   padding: 14px 16px;
   border-radius: 18px;
-  background: var(--surface);
+  background: var(--bg);
+  border: 1px solid var(--line);
 }
 
 .tile__value {
@@ -83,14 +84,15 @@
   align-items: flex-start;
   padding: 22px;
   border-radius: 24px;
-  background: var(--text);
-  color: #fff;
+  background: var(--accent-soft);
+  color: var(--text);
 }
 
 .today__label {
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--accent-strong);
+  color: var(--on-accent);
   font-size: 13px;
   font-weight: 800;
 }
@@ -104,7 +106,7 @@
 
 .today__muted {
   margin: 0;
-  color: #c9c9c9;
+  color: var(--text-muted);
 }
 
 .today__thumbs {
@@ -144,7 +146,7 @@
 }
 
 .today__thumbs .today__thumb-more {
-  background: #333336;
+  background: var(--accent-ink);
   color: #fff;
   font-weight: 800;
 }
@@ -159,8 +161,8 @@
   margin-top: 18px;
   border: none;
   border-radius: 14px;
-  background: #fff;
-  color: var(--text);
+  background: var(--text);
+  color: #fff;
   font: inherit;
   font-weight: 900;
   text-decoration: none;
@@ -168,7 +170,7 @@
 }
 
 .today__start:hover {
-  color: var(--text);
+  color: #fff;
   opacity: 0.9;
 }
 
@@ -180,18 +182,18 @@
 .today__alt {
   align-self: center;
   margin-top: 10px;
-  color: #c9c9c9;
+  color: var(--text-muted);
   font-size: 14px;
   font-weight: 700;
 }
 
 .today__alt:hover {
-  color: #fff;
+  color: var(--text);
 }
 
 .today__error {
   margin: 10px 0 0;
-  color: #ffb4ae;
+  color: var(--danger);
   font-weight: 700;
 }
 
@@ -200,6 +202,7 @@
   align-items: center;
   gap: 6px;
   background: var(--ok-ink);
+  color: #fff;
 }
 
 .today__done {
@@ -211,17 +214,17 @@
   align-self: stretch;
   min-height: 46px;
   margin-top: 14px;
-  border: 1px solid #4a4a4d;
+  border: 1px solid var(--line-strong);
   border-radius: 14px;
   background: transparent;
-  color: #fff;
+  color: var(--text);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
 }
 
 .today__again:hover:not(:disabled) {
-  background: #2c2c2f;
+  background: var(--bg);
 }
 
 .today__again:disabled {

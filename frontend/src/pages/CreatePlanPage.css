@@ -62,12 +62,12 @@
 }
 
 .template-option:hover {
-  border-color: #c9c9c9;
+  border-color: var(--line-strong);
 }
 
 .template-option--selected,
 .template-option--selected:hover {
-  border-color: #e2463c;
+  border-color: var(--accent-ink);
 }
 
 .template-option__name {

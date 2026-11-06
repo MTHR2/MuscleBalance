@@ -16,9 +16,13 @@
 }
 
 .logo {
-  font-size: 26px;
-  font-weight: 900;
-  letter-spacing: 0.2px;
+  font-size: 21px;
+  font-family: var(--display);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text);
   text-decoration: none;
 }
@@ -80,7 +84,7 @@
   }
 
   .logo {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .header__inner > :last-child:not(.nav) {
@@ -162,6 +166,7 @@
 
 .card {
   border: 1px solid var(--line);
+  background: var(--bg);
   border-radius: 24px;
   padding: 22px;
   box-sizing: border-box;
@@ -211,11 +216,11 @@
 
 .accent-button {
   background: var(--accent-strong);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .accent-button:hover {
-  color: #fff;
+  color: var(--on-accent);
   opacity: 0.9;
 }
 
@@ -254,7 +259,7 @@
 }
 
 .chip-button:hover {
-  border-color: #c9c9c5;
+  border-color: var(--line-strong);
   color: var(--text);
 }
 
@@ -268,7 +273,7 @@
 
 .chip-button--dashed {
   border-style: dashed;
-  border-color: #bdbdb8;
+  border-color: var(--line-strong);
   color: var(--text-muted);
   font-weight: 800;
 }
@@ -355,7 +360,7 @@
 
 .error {
   margin-top: 20px;
-  color: var(--accent-ink);
+  color: var(--danger);
   font-weight: 700;
 }
 
@@ -394,5 +399,5 @@
 
 .field__input:focus {
   outline: none;
-  border-color: #b9b9b4;
+  border-color: var(--line-strong);
 }

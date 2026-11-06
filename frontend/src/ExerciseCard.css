@@ -52,12 +52,12 @@
 }
 
 .exercise-card__fav:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .exercise-card__fav--on {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .exercise-card__fav:disabled {
