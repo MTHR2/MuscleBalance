@@ -1,6 +1,7 @@
 package com.gymtracker.repository;
 
 import com.gymtracker.dto.stats.MuscleLoadRow;
+import com.gymtracker.entity.Exercise;
 import com.gymtracker.entity.Workout;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -79,5 +81,42 @@ public interface WorkoutRepository extends JpaRepository<Workout, Long> {
 
     // история: завершённые тренировки, свежие первыми
     List<Workout> findByFinishedAtIsNotNullOrderByFinishedAtDesc(Pageable pageable);
+
+    @Query("""
+            select count(s) from Workout w
+              join w.exercises we
+              join we.sets s
+            where w.finishedAt is not null
+              and w.startedAt >= :from and w.startedAt < :to
+              and s.warmup = false
+            """)
+    long countFinishedWorkingSetsBetween(@Param("from") OffsetDateTime from,
+                                         @Param("to") OffsetDateTime to);
+
+    @Query("""
+            select coalesce(sum(s.weight * s.reps), 0) from Workout w
+              join w.exercises we
+              join we.sets s
+              join we.exercise e
+            where w.finishedAt is not null
+              and w.startedAt >= :from and w.startedAt < :to
+              and s.warmup = false
+              and e.loadType = com.gymtracker.entity.LoadType.weighted
+            """)
+    BigDecimal sumFinishedVolumeBetween(@Param("from") OffsetDateTime from,
+                                        @Param("to") OffsetDateTime to);
+
+    @Query("""
+            select distinct e from Workout w
+              join w.exercises we
+              join we.sets s
+              join we.exercise e
+            where w.finishedAt is not null
+              and w.startedAt >= :from and w.startedAt < :to
+              and s.warmup = false
+            order by e.name
+            """)
+    List<Exercise> findExercisesWithWorkingSetsBetween(@Param("from") OffsetDateTime from,
+                                                       @Param("to") OffsetDateTime to);
 
 }
