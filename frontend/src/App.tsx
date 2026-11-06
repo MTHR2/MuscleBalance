@@ -9,6 +9,7 @@ import WorkoutsPage from './pages/WorkoutsPage'
 import PlansPage from './pages/PlansPage'
 import CreatePlanPage from './pages/CreatePlanPage'
 import WorkoutPage from './pages/WorkoutPage'
+import AnalyticsPage from './pages/AnalyticsPage'
 import './App.css'
 
 const navClass = ({ isActive }: { isActive: boolean }) => `nav__link${isActive ? ' active' : ''}`
@@ -33,6 +34,10 @@ function Header() {
     <header className="header">
       <div className="header__inner">
         <Link to="/" className="logo">
+          <svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true">
+            <rect width="40" height="40" rx="11" fill="#bfddf2" />
+            <path d="M12 14v12M28 14v12M8 17v6M32 17v6M12 20h16" fill="none" stroke="#2f6e9e" strokeWidth="3.4" strokeLinecap="round" />
+          </svg>
           GymTracker
         </Link>
         <nav className="nav" aria-label="Разделы">
@@ -48,11 +53,14 @@ function Header() {
           <NavLink to="/plans" className={navClass}>
             План
           </NavLink>
+          <NavLink to="/analytics" className={navClass}>
+            Аналитика
+          </NavLink>
         </nav>
         {onWorkout ? (
           hasActive && <span className="live-badge">Идёт тренировка</span>
         ) : (
-          <Link to="/workout" className="primary-button">
+          <Link to="/workout" className="accent-button">
             <PlayIcon />
             {hasActive ? 'Продолжить' : 'Начать'}
             <span className="hide-narrow"> тренировку</span>
@@ -78,6 +86,7 @@ function App() {
         <Route path="/plans/:planId" element={<PlansPage />} />
         <Route path="/plans/:planId/edit" element={<CreatePlanPage />} />
         <Route path="/workout" element={<WorkoutPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
       </Routes>
     </>
   )

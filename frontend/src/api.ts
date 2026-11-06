@@ -173,6 +173,7 @@ export type WorkoutSummary = {
   durationSeconds: number
   completionPercent: number | null // null для свободной тренировки
   completedSets: number
+  volume: number | null
 }
 
 export type StartWorkoutRequest = { workoutTemplateId?: number | null; name?: string }
@@ -303,3 +304,114 @@ export const updateSet = (id: number, workoutExerciseId: number, setId: number, 
 
 export const deleteSet = (id: number, workoutExerciseId: number, setId: number) =>
   send<void>('DELETE', `${W}/${id}/exercises/${workoutExerciseId}/sets/${setId}`)
+
+export type StatsPeriod = 'MONTH' | 'QUARTER' | 'YEAR'
+
+export type StatsOverview = {
+  workoutsThisMonth: number
+  workoutsPlannedThisMonth: number | null
+  weekStreak: number | null
+  volumeTonnes30d: number
+  volumeTonnesPrev30d: number
+  volumeChangePercent: number | null
+  avgDurationSeconds: number | null
+  avgSets: number | null
+}
+
+export type MuscleGroupStats = {
+  groupId: number
+  name: string
+  sets: number
+  targetSets: number
+}
+
+export type MonthlyWorkouts = {
+  month: string
+  count: number
+  planned: number | null
+}
+
+export type ExerciseStatsItem = {
+  id: number
+  name: string
+  imageUrl: string | null
+  loadType: LoadType
+  workingWeight: number | null
+}
+
+export type ProgressPoint = {
+  weekStart: string
+  weight: number
+  reps: number
+  record: boolean
+}
+
+export type ExerciseProgress = {
+  exerciseId: number
+  name: string
+  loadType: LoadType
+  points: ProgressPoint[]
+  current: number | null
+  delta: number | null
+  deltaPercent: number | null
+  estimatedMax: number | null
+}
+
+export type PersonalRecord = {
+  exerciseId: number
+  name: string
+  loadType: LoadType
+  date: string
+  weight: number
+  reps: number
+  delta: number | null
+}
+
+export type PersonalRecords = {
+  records: PersonalRecord[]
+  totalInPeriod: number
+}
+
+export type BodyWeightPoint = {
+  id: number
+  date: string
+  weight: number
+  avg7: number | null
+}
+
+export type BodyWeightChart = {
+  points: BodyWeightPoint[]
+  current: number | null
+  change30: number | null
+  target: number | null
+  toTarget: number | null
+}
+
+export type BodyWeight = { id: number; date: string; weight: number }
+
+export type Profile = { targetBodyWeight: number | null }
+
+const S = '/api/v1/stats'
+
+export const getStatsOverview = (period: StatsPeriod) => get<StatsOverview>(`${S}/overview?period=${period}`)
+
+export const getMuscleGroupStats = (period: StatsPeriod) =>
+  get<MuscleGroupStats[]>(`${S}/muscle-groups?period=${period}`)
+
+export const getMonthlyWorkouts = (months = 12) => get<MonthlyWorkouts[]>(`${S}/workouts/monthly?months=${months}`)
+
+export const getStatsExercises = (period: StatsPeriod) => get<ExerciseStatsItem[]>(`${S}/exercises?period=${period}`)
+
+export const getExerciseProgress = (id: number, period: StatsPeriod) =>
+  get<ExerciseProgress>(`${S}/exercises/${id}/progress?period=${period}`)
+
+export const getPersonalRecords = (period: StatsPeriod, limit = 5) =>
+  get<PersonalRecords>(`${S}/records?period=${period}&limit=${limit}`)
+
+export const getBodyWeightChart = (period: StatsPeriod) => get<BodyWeightChart>(`/api/v1/body-weights?period=${period}`)
+
+export const saveBodyWeight = (body: { date?: string; weight: number }) => post<BodyWeight>('/api/v1/body-weights', body)
+
+export const getProfile = () => get<Profile>('/api/v1/profile')
+
+export const updateProfile = (body: Profile) => send<Profile>('PUT', '/api/v1/profile', body)
