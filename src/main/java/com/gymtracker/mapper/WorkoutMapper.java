@@ -9,6 +9,8 @@ import com.gymtracker.dto.workout.WorkoutSummaryDto;
 import com.gymtracker.entity.*;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 @Component
 public class WorkoutMapper {
     public WorkoutSetDto toSetDto(WorkoutSet workoutSet) {
@@ -23,9 +25,10 @@ public class WorkoutMapper {
     }
 
     public WorkoutSummaryDto toSummaryDto(Workout workout, long durationSeconds,
-                                          Integer completionPercent, int completedSets) {
+                                          Integer completionPercent, int completedSets,
+                                          BigDecimal volume) {
         return new WorkoutSummaryDto(workout.getId(), workout.getName(), workout.getStartedAt(),
-                workout.getFinishedAt(), durationSeconds, completionPercent, completedSets);
+                workout.getFinishedAt(), durationSeconds, completionPercent, completedSets, volume);
     }
 
     public WorkoutExerciseDto toExerciseDto(WorkoutExercise workExsc) {

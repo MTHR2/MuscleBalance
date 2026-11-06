@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
@@ -56,6 +57,21 @@ public class WorkoutService {
     private WorkoutSet findWorkoutSet(WorkoutExercise wE, Long setId) {
         return wE.getSets().stream().filter(s -> s.getId().equals(setId))
                 .findFirst().orElseThrow(() -> new NoSuchElementException("Нет такого подхода в упражнении"));
+    }
+
+    private BigDecimal calculateVolume(Workout workout) {
+        BigDecimal volume = BigDecimal.ZERO;
+        for (WorkoutExercise we : workout.getExercises()) {
+            if (we.getExercise().getLoadType() != LoadType.weighted) {
+                continue;
+            }
+            for (WorkoutSet s : we.getSets()) {
+                if (!s.isWarmup()) {
+                    volume = volume.add(s.getWeight().multiply(BigDecimal.valueOf(s.getReps())));
+                }
+            }
+        }
+        return volume;
     }
 
     private Integer calculateCompletionPercent(Workout workout) {
@@ -157,7 +173,8 @@ public class WorkoutService {
             completedSets += countWorkingSets(we);
         }
         long duration = Duration.between(workout.getStartedAt(), workout.getFinishedAt()).getSeconds();
-        return workoutMapper.toSummaryDto(workout, duration, calculateCompletionPercent(workout), completedSets);
+        return workoutMapper.toSummaryDto(workout, duration, calculateCompletionPercent(workout), completedSets,
+                calculateVolume(workout));
     }
 
     @Transactional
@@ -219,6 +236,7 @@ public class WorkoutService {
         }
         long duration = Duration.between(workout.getStartedAt(), workout.getFinishedAt()).getSeconds();
 
-        return workoutMapper.toSummaryDto(workout, duration,calculateCompletionPercent(workout) , completedSets);
+        return workoutMapper.toSummaryDto(workout, duration,calculateCompletionPercent(workout) , completedSets,
+                calculateVolume(workout));
     }
 }

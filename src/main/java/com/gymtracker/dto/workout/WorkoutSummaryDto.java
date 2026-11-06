@@ -1,5 +1,6 @@
 package com.gymtracker.dto.workout;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public record WorkoutSummaryDto(
@@ -9,6 +10,7 @@ public record WorkoutSummaryDto(
         OffsetDateTime finishedAt,
         long durationSeconds,
         Integer completionPercent,
-        int completedSets
+        int completedSets,
+        BigDecimal volume
 ) {
 }
