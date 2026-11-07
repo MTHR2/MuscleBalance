@@ -9,6 +9,10 @@ import com.gymtracker.dto.plan.TodayWorkoutDto;
 import com.gymtracker.entity.Muscle;
 import com.gymtracker.entity.Plan;
 import com.gymtracker.entity.WorkoutTemplate;
+import com.gymtracker.exception.BusinessRuleException;
+import com.gymtracker.exception.ConflictException;
+import com.gymtracker.exception.DomainErrorCode;
+import com.gymtracker.exception.NotFoundException;
 import com.gymtracker.mapper.PlanMapper;
 import com.gymtracker.mapper.WorkoutTemplateMapper;
 import com.gymtracker.repository.MuscleRepository;
@@ -38,14 +42,14 @@ public class PlanService {
         List<Short> daysOfWeek = request.days().stream().map(PlanDayRequestDto::dayOfWeek).toList();
         Set<Short> daysSet = new HashSet<>(daysOfWeek);
         if (daysOfWeek.size() != daysSet.size()) {
-            throw new IllegalArgumentException("две записи на dayOfWeek");
+            throw new BusinessRuleException(DomainErrorCode.PLAN_DAY_DUPLICATED);
         }
         Set<Long> templateIdSet = new HashSet<>(request.days()
                 .stream().map(PlanDayRequestDto::workoutTemplateId).toList());
         List<WorkoutTemplate> templates = workoutTemplateRepository.findAllById(templateIdSet);
 
         if (templateIdSet.size() != templates.size()) {
-            throw new IllegalArgumentException("Одна или несколько тренировок не найдены");
+            throw new BusinessRuleException(DomainErrorCode.TEMPLATES_NOT_FOUND);
         }
         return templates.stream().collect(Collectors.
                 toMap(WorkoutTemplate::getId, workoutTemplate -> workoutTemplate));
@@ -58,11 +62,11 @@ public class PlanService {
         List<Short> muscleIds = targets.stream().map(MuscleTargetRequestDto::muscleId).toList();
         Set<Short> muscleIdSet = new HashSet<>(muscleIds);
         if (muscleIds.size() != muscleIdSet.size()) {
-            throw new IllegalArgumentException("Две цели на одну мышцу");
+            throw new BusinessRuleException(DomainErrorCode.PLAN_MUSCLE_TARGET_DUPLICATED);
         }
         List<Muscle> muscleList = muscleRepository.findAllById(muscleIdSet);
         if (muscleIdSet.size() != muscleList.size()) {
-            throw new IllegalArgumentException("Одна или несколько мышц не найдены");
+            throw new BusinessRuleException(DomainErrorCode.MUSCLES_NOT_FOUND);
         }
         return muscleList.stream()
                 .collect(Collectors.toMap(Muscle::getId, muscle -> muscle));
@@ -77,7 +81,7 @@ public class PlanService {
     @Transactional(readOnly = true)
     public PlanDetailsDto getPlan(Long planId) {
         return planRepository.findWithDaysById(planId).map(planMapper::toDetailsDto)
-                .orElseThrow(() -> new NoSuchElementException("something")); // наугад пихнул исключение
+                .orElseThrow(NotFoundException::plan);
     }
 
     /** Тренировка активного плана на сегодня; пусто, если плана нет или сегодня день отдыха */
@@ -100,7 +104,7 @@ public class PlanService {
 
     @Transactional
     public PlanDetailsDto activatePlan(Long id) {
-        Plan planToActivate = planRepository.findWithDaysById(id).orElseThrow();
+        Plan planToActivate = planRepository.findWithDaysById(id).orElseThrow(NotFoundException::plan);
         if (planToActivate.isActive()) {
             return planMapper.toDetailsDto(planToActivate);
         }
@@ -114,14 +118,14 @@ public class PlanService {
     @Transactional
     public void deletePlan(Long id) {
         Plan plan = planRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("нет плана"));
+                .orElseThrow(NotFoundException::plan);
         planRepository.delete(plan);
     }
 
     @Transactional
     public PlanDetailsDto createPlan(SavePlanRequestDto request) {
         if (planRepository.existsByNameIgnoreCase(request.name())) {
-            throw new IllegalArgumentException("План с таким именем существует");
+            throw ConflictException.planNameTaken(request.name());
         }
         Map<Long, WorkoutTemplate> templates = loadTemplates(request);
         Map<Short, Muscle> muscles = loadMuscles(request);
@@ -140,11 +144,11 @@ public class PlanService {
     @Transactional
     public PlanDetailsDto updatePlan(Long id, SavePlanRequestDto request) {
         Plan plan = planRepository.findWithDaysById(id)
-                .orElseThrow(() -> new NoSuchElementException("нет плана"));
+                .orElseThrow(NotFoundException::plan);
         // имя занято другим планом (смена регистра у самого себя не в счёт)
         if (!plan.getName().equalsIgnoreCase(request.name())
                 && planRepository.existsByNameIgnoreCase(request.name())) {
-            throw new IllegalArgumentException("План с таким именем существует");
+            throw ConflictException.planNameTaken(request.name());
         }
         Map<Long, WorkoutTemplate> templates = loadTemplates(request);
         Map<Short, Muscle> muscles = loadMuscles(request);

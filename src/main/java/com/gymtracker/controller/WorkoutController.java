@@ -1,12 +1,14 @@
 package com.gymtracker.controller;
 
 import com.gymtracker.dto.workout.*;
+import com.gymtracker.exception.BusinessRuleException;
+import com.gymtracker.exception.DomainErrorCode;
 import com.gymtracker.service.WorkoutService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -28,15 +30,16 @@ public class WorkoutController {
     public List<WorkoutSummaryDto> getFinishedWorkouts(@RequestParam(defaultValue = "true") boolean finished,
                                                        @RequestParam(defaultValue = "50") int limit) {
         if (!finished) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Поддерживается только finished=true");
+            throw new BusinessRuleException(DomainErrorCode.WORKOUT_FILTER_UNSUPPORTED);
         }
         return workoutService.getFinishedWorkouts(Math.min(Math.max(limit, 1), 200));
     }
 
     @GetMapping("/active")
-    public WorkoutDetailsDto getActiveWorkout() {
-        return workoutService.getActiveWorkout();
-
+    public ResponseEntity<WorkoutDetailsDto> getActiveWorkout() {
+        return workoutService.getActiveWorkout()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping("/{id}")

@@ -7,14 +7,16 @@ import com.gymtracker.dto.exercise.ExerciseMuscleRequestDto;
 import com.gymtracker.entity.Exercise;
 import com.gymtracker.entity.Muscle;
 import com.gymtracker.entity.MuscleRole;
+import com.gymtracker.exception.BusinessRuleException;
+import com.gymtracker.exception.ConflictException;
+import com.gymtracker.exception.DomainErrorCode;
+import com.gymtracker.exception.NotFoundException;
 import com.gymtracker.mapper.ExerciseMapper;
 import com.gymtracker.repository.ExerciseRepository;
 import com.gymtracker.repository.MuscleRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -42,13 +44,13 @@ public class ExerciseService {
     public ExerciseDetailsDto getExerciseById(Long exerciseId){
         return exerciseRepository.findById(exerciseId)
                 .map(exerciseMapper::toDetailsDto)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Упражнение не найдено"));
+                .orElseThrow(NotFoundException::exercise);
     }
 
     @Transactional
     public ExerciseDetailsDto setFavourite(Long exerciseId, boolean favourite){
         Exercise exercise = exerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Упражнение не найдено"));
+                .orElseThrow(NotFoundException::exercise);
         exercise.setFavourite(favourite);
         return exerciseMapper.toDetailsDto(exercise);
     }
@@ -57,20 +59,20 @@ public class ExerciseService {
     public ExerciseDetailsDto createExercise(CreateExerciseRequestDto request){
         String name = request.name().trim();
         if (exerciseRepository.existsByNameIgnoreCaseAndArchivedAtIsNull(name)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Упражнение с таким названием уже есть");
+            throw ConflictException.exerciseNameTaken(name);
         }
 
         List<Short> muscleIds = request.muscles().stream().map(ExerciseMuscleRequestDto::muscleId).toList();
         Set<Short> muscleIdSet = new HashSet<>(muscleIds);
         if (muscleIds.size() != muscleIdSet.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Мышца указана дважды");
+            throw new BusinessRuleException(DomainErrorCode.EXERCISE_MUSCLE_DUPLICATED);
         }
         if (request.muscles().stream().noneMatch(m -> m.role() == MuscleRole.primary)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Нужна хотя бы одна основная мышца");
+            throw new BusinessRuleException(DomainErrorCode.EXERCISE_PRIMARY_MUSCLE_REQUIRED);
         }
         List<Muscle> muscleList = muscleRepository.findAllById(muscleIdSet);
         if (muscleList.size() != muscleIdSet.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Одна или несколько мышц не найдены");
+            throw new BusinessRuleException(DomainErrorCode.MUSCLES_NOT_FOUND);
         }
         Map<Short, Muscle> muscles = muscleList.stream()
                 .collect(Collectors.toMap(Muscle::getId, muscle -> muscle));

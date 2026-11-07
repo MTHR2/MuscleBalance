@@ -179,14 +179,53 @@ export type WorkoutSummary = {
 export type StartWorkoutRequest = { workoutTemplateId?: number | null; name?: string }
 export type SetValues = { reps: number; weight: number; warmup: boolean }
 
-// текст ошибки берём из ответа Spring (поле message), иначе — статус
+export type FieldViolation = { field: string; message: string }
+
+export type ApiErrorBody = {
+  status: number
+  code: string
+  message: string
+  path?: string
+  timestamp?: string
+  fieldErrors?: FieldViolation[]
+}
+
+export class ApiRequestError extends Error {
+  readonly status: number
+  readonly code: string
+  readonly fieldErrors: FieldViolation[]
+
+  constructor(status: number, code: string, message: string, fieldErrors: FieldViolation[] = []) {
+    super(message)
+    this.name = 'ApiRequestError'
+    this.status = status
+    this.code = code
+    this.fieldErrors = fieldErrors
+  }
+
+  fieldMessage(field: string) {
+    return this.fieldErrors.find((f) => f.field === field)?.message
+  }
+}
+
+const isApiErrorBody = (b: unknown): b is ApiErrorBody =>
+  typeof b === 'object' && b !== null && typeof (b as ApiErrorBody).code === 'string' &&
+  typeof (b as ApiErrorBody).message === 'string'
+
+async function toRequestError(res: Response): Promise<ApiRequestError> {
+  const body: unknown = await res.json().catch(() => null)
+  if (isApiErrorBody(body)) {
+    return new ApiRequestError(res.status, body.code, body.message, body.fieldErrors ?? [])
+  }
+  if (res.status >= 502 && res.status <= 504) {
+    return new ApiRequestError(res.status, 'SERVER_UNAVAILABLE', 'Сервер не отвечает')
+  }
+  return new ApiRequestError(res.status, 'UNKNOWN', `${res.status} ${res.statusText}`.trim())
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init)
-  if (!res.ok) {
-    const body = await res.json().catch(() => null)
-    throw new Error(body?.message || `${res.status} ${res.statusText}`)
-  }
-  // 204 No Content — тела нет
+  if (!res.ok) throw await toRequestError(res)
   if (res.status === 204) return undefined as T
   return res.json()
 }
@@ -267,15 +306,9 @@ const W = '/api/v1/workouts'
 // событие окна: тренировка началась, завершилась или отменена (слушает шапка)
 export const WORKOUT_CHANGED = 'gymtracker:workout-changed'
 
-// без активной тренировки бэк пока отвечает ошибкой (500/404) — это значит «нет активной»;
-// сетевую ошибку (бэк не запущен) пробрасываем дальше
 export async function getActiveWorkout(): Promise<WorkoutDetails | null> {
-  const res = await fetch(`${W}/active`)
-  if (res.ok) return res.json()
-  if (res.status === 502 || res.status === 503 || res.status === 504) {
-    throw new Error('Сервер не отвечает')
-  }
-  return null
+  const workout = await get<WorkoutDetails | undefined>(`${W}/active`)
+  return workout ?? null
 }
 
 export const startWorkout = (body: StartWorkoutRequest) => post<WorkoutDetails>(W, body)

@@ -15,9 +15,5 @@ spring:
         default_batch_fetch_size: 50
   flyway:
     enabled: true
-server:
-  error:
-    # текст ResponseStatusException попадает в ответ, фронт показывает его пользователю
-    include-message: always
 app:
   timezone: ${APP_TIMEZONE:}

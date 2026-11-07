@@ -14,6 +14,7 @@ import com.gymtracker.repository.StatsRepository.BestSetRow;
 import com.gymtracker.repository.StatsRepository.RecordRow;
 import com.gymtracker.repository.WorkoutRepository;
 import com.gymtracker.service.TimeWindows.Window;
+import com.gymtracker.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +23,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +46,7 @@ public class ProgressService {
     @Transactional(readOnly = true)
     public ExerciseProgressDto getProgress(Long exerciseId, StatsPeriod period) {
         Exercise exercise = exerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new NoSuchElementException("Упражнение не найдено"));
+                .orElseThrow(NotFoundException::exercise);
         boolean bodyweight = exercise.getLoadType() == LoadType.bodyweight;
         Window window = timeWindows.period(period);
 

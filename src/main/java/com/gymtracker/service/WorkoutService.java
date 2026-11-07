@@ -3,6 +3,10 @@ package com.gymtracker.service;
 import com.gymtracker.dto.exercise.ExerciseDetailsDto;
 import com.gymtracker.dto.workout.*;
 import com.gymtracker.entity.*;
+import com.gymtracker.exception.BusinessRuleException;
+import com.gymtracker.exception.ConflictException;
+import com.gymtracker.exception.DomainErrorCode;
+import com.gymtracker.exception.NotFoundException;
 import com.gymtracker.mapper.WorkoutMapper;
 import com.gymtracker.repository.ExerciseRepository;
 import com.gymtracker.repository.WorkoutRepository;
@@ -17,7 +21,6 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -31,9 +34,9 @@ public class WorkoutService {
 
     private Workout getOpenWorkout(Long workoutId) {
         Workout workout = workoutRepository.findWithExercisesById(workoutId).
-                orElseThrow(() -> new NoSuchElementException("не найдена или уже завершена"));
+                orElseThrow(NotFoundException::workout);
         if (workout.getFinishedAt() != null) {
-            throw new IllegalStateException("тренировка уже начата");
+            throw ConflictException.workoutAlreadyFinished();
         }
         return workout;
     }
@@ -51,12 +54,12 @@ public class WorkoutService {
     private WorkoutExercise findWorkoutExercise(Workout workout, Long workoutExerciseId) {
         return workout.getExercises().stream()
                 .filter(w -> w.getId().equals(workoutExerciseId))
-                .findFirst().orElseThrow(() -> new NoSuchElementException("Упражнение не найдено в тренировке"));
+                .findFirst().orElseThrow(NotFoundException::workoutExercise);
     }
 
     private WorkoutSet findWorkoutSet(WorkoutExercise wE, Long setId) {
         return wE.getSets().stream().filter(s -> s.getId().equals(setId))
-                .findFirst().orElseThrow(() -> new NoSuchElementException("Нет такого подхода в упражнении"));
+                .findFirst().orElseThrow(NotFoundException::workoutSet);
     }
 
     private BigDecimal calculateVolume(Workout workout) {
@@ -93,13 +96,13 @@ public class WorkoutService {
     @Transactional
     public WorkoutDetailsDto startWorkout(StartWorkoutRequestDto request) {
         if (workoutRepository.existsByFinishedAtIsNull()) {
-            throw new IllegalStateException("не знаю какое исключение");
+            throw ConflictException.workoutAlreadyActive();
         }
         Workout workout;
         WorkoutTemplate wT;
         if (request.workoutTemplateId() != null) {
             wT = workoutTemplateRepository.findWithExercisesById(request.workoutTemplateId())
-                    .orElseThrow(() -> new NoSuchElementException("шаблон не найден"));
+                    .orElseThrow(NotFoundException::template);
             workout = workoutMapper.createFromTemplate(wT);  // врядли верно все это
         } else {
             String name = (request.name() == null || request.name().isBlank()) ?
@@ -111,15 +114,14 @@ public class WorkoutService {
     }
 
     @Transactional(readOnly = true)
-    public WorkoutDetailsDto getActiveWorkout() {
-        return workoutRepository.findByFinishedAtIsNull().map(workoutMapper::toDetailsDto)
-                .orElseThrow(() -> new NoSuchElementException("Нет активной тренировки"));
+    public Optional<WorkoutDetailsDto> getActiveWorkout() {
+        return workoutRepository.findByFinishedAtIsNull().map(workoutMapper::toDetailsDto);
     }
 
     @Transactional(readOnly = true)
     public WorkoutDetailsDto getWorkout(Long id) {
         return workoutRepository.findWithExercisesById(id)
-                .map(workoutMapper::toDetailsDto).orElseThrow(() -> new NoSuchElementException("не такой тренировки"));
+                .map(workoutMapper::toDetailsDto).orElseThrow(NotFoundException::workout);
     }
 
     @Transactional
@@ -131,16 +133,12 @@ public class WorkoutService {
     @Transactional
     public WorkoutExerciseDto addExercise(Long workoutId, AddWorkoutExerciseRequestDto request) {
         Workout workout = getOpenWorkout(workoutId);
-        // можно всю эту провреку заменить на findById TODO
-        if (!exerciseRepository.existsById(request.exerciseId())) { // доабвить потом проверку что не в архиве
-            throw new NoSuchElementException("не существует такого упражнения");
-        }
+        Exercise exercise = exerciseRepository.findById(request.exerciseId())
+                .orElseThrow(NotFoundException::exercise);
         if (workout.getExercises().stream().anyMatch(we -> we.getExercise().getId().equals(request.exerciseId()))) {
-            throw new IllegalStateException("Это упражнене уже есть в тренировке");
+            throw ConflictException.workoutExerciseDuplicated();
         }
 
-        Exercise exercise = exerciseRepository.findById(request.exerciseId())
-                .orElseThrow(() -> new NoSuchElementException("упражнение не найдено"));
         // следующий после последнего, а не size(): после удаления упражнения из середины номера бы совпали
         short sortOrder = (short) (workout.getExercises().stream()
                 .mapToInt(WorkoutExercise::getSortOrder).max().orElse(-1) + 1);
@@ -212,7 +210,7 @@ public class WorkoutService {
         WorkoutExercise wE = findWorkoutExercise(workout, wExId);
         WorkoutSet wSet = findWorkoutSet(wE, setId);
         if (wE.getSets().size() != wSet.getSetNumber()) {
-            throw new IllegalStateException("Это не послдений подход?");
+            throw ConflictException.setNotLast();
         }
         wE.getSets().remove(wSet);
     }
@@ -225,7 +223,7 @@ public class WorkoutService {
             completedSets += countWorkingSets(we);
         }
         if (completedSets == 0) {
-            throw new IllegalStateException("В тренировке нет ни одного рабочего подхода, отмените её");
+            throw new BusinessRuleException(DomainErrorCode.WORKOUT_NO_WORKING_SETS);
         }
 
         workout.setFinishedAt(OffsetDateTime.now());

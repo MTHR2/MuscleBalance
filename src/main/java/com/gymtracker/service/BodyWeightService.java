@@ -13,6 +13,7 @@ import com.gymtracker.mapper.BodyWeightMapper;
 import com.gymtracker.repository.BodyWeightRepository;
 import com.gymtracker.repository.ProfileRepository;
 import com.gymtracker.service.TimeWindows.Window;
+import com.gymtracker.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +23,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -84,7 +84,7 @@ public class BodyWeightService {
     @Transactional
     public void delete(Long id) {
         BodyWeight bodyWeight = bodyWeightRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Замер не найден"));
+                .orElseThrow(NotFoundException::bodyWeight);
         bodyWeightRepository.delete(bodyWeight);
     }
 

@@ -1,6 +1,7 @@
 package com.gymtracker.service;
 
 import com.gymtracker.dto.muscle.MuscleGroupCardDto;
+import com.gymtracker.exception.NotFoundException;
 import com.gymtracker.mapper.MuscleGroupMapper;
 import com.gymtracker.repository.MuscleGroupRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,6 @@ public class MuscleGroupService {
     }
     public MuscleGroupCardDto getMuscleGroupById(Short muscleGroupId){
         return muscleGroupRepository.findById(muscleGroupId).
-                map(muscleGroupMapper::toMuscleGroupCardDto).orElseThrow();
+                map(muscleGroupMapper::toMuscleGroupCardDto).orElseThrow(NotFoundException::muscleGroup);
     }
 }
