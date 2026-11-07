@@ -1,0 +1,36 @@
+package com.musclebalance.controller;
+
+import com.musclebalance.dto.workouttemplate.CreateWorkoutTemplateRequestDto;
+import com.musclebalance.dto.workouttemplate.WorkoutTemplateDetailsDto;
+import com.musclebalance.dto.workouttemplate.WorkoutTemplateListItemDto;
+import com.musclebalance.service.WorkoutTemplateService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/workout-templates")
+@RequiredArgsConstructor
+public class WorkoutTemplateController {
+    private final WorkoutTemplateService workoutTemplateService;
+
+    @GetMapping
+    public List<WorkoutTemplateListItemDto> getWorkoutList(){
+        return workoutTemplateService.getWorkoutList();
+    }
+
+    @GetMapping("/{id}")
+    public WorkoutTemplateDetailsDto getWorkoutTemplateDetailsById(@PathVariable Long id){
+        return workoutTemplateService.getWorkoutTemplateDetailsById(id);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public WorkoutTemplateDetailsDto createWorkoutTemplate(@Valid @RequestBody CreateWorkoutTemplateRequestDto request){
+        return workoutTemplateService.createWorkoutTemplate(request);
+    }
+
+}

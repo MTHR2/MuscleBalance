@@ -304,7 +304,7 @@ export const updatePlan = (id: number, body: SavePlanRequest) => send<PlanDetail
 const W = '/api/v1/workouts'
 
 // событие окна: тренировка началась, завершилась или отменена (слушает шапка)
-export const WORKOUT_CHANGED = 'gymtracker:workout-changed'
+export const WORKOUT_CHANGED = 'musclebalance:workout-changed'
 
 export async function getActiveWorkout(): Promise<WorkoutDetails | null> {
   const workout = await get<WorkoutDetails | undefined>(`${W}/active`)

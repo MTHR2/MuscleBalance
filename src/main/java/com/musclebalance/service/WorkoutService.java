@@ -1,0 +1,240 @@
+package com.musclebalance.service;
+
+import com.musclebalance.dto.exercise.ExerciseDetailsDto;
+import com.musclebalance.dto.workout.*;
+import com.musclebalance.entity.*;
+import com.musclebalance.exception.BusinessRuleException;
+import com.musclebalance.exception.ConflictException;
+import com.musclebalance.exception.DomainErrorCode;
+import com.musclebalance.exception.NotFoundException;
+import com.musclebalance.mapper.WorkoutMapper;
+import com.musclebalance.repository.ExerciseRepository;
+import com.musclebalance.repository.WorkoutRepository;
+import com.musclebalance.repository.WorkoutTemplateRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+public class WorkoutService {
+    private final WorkoutMapper workoutMapper;
+    private final WorkoutRepository workoutRepository;
+    private final WorkoutTemplateRepository workoutTemplateRepository;
+    private final ExerciseRepository exerciseRepository;
+
+
+    private Workout getOpenWorkout(Long workoutId) {
+        Workout workout = workoutRepository.findWithExercisesById(workoutId).
+                orElseThrow(NotFoundException::workout);
+        if (workout.getFinishedAt() != null) {
+            throw ConflictException.workoutAlreadyFinished();
+        }
+        return workout;
+    }
+
+    private int countWorkingSets(WorkoutExercise wE) {
+        return (int) wE.getSets().stream().filter(s -> !s.isWarmup()).count();
+    }
+
+    private Optional<WorkoutSet> lastWorkingSet(WorkoutExercise we) {
+        return we.getSets()
+                .stream().filter(s -> !s.isWarmup())
+                .max(Comparator.comparing(WorkoutSet::getSetNumber));
+    }
+
+    private WorkoutExercise findWorkoutExercise(Workout workout, Long workoutExerciseId) {
+        return workout.getExercises().stream()
+                .filter(w -> w.getId().equals(workoutExerciseId))
+                .findFirst().orElseThrow(NotFoundException::workoutExercise);
+    }
+
+    private WorkoutSet findWorkoutSet(WorkoutExercise wE, Long setId) {
+        return wE.getSets().stream().filter(s -> s.getId().equals(setId))
+                .findFirst().orElseThrow(NotFoundException::workoutSet);
+    }
+
+    private BigDecimal calculateVolume(Workout workout) {
+        BigDecimal volume = BigDecimal.ZERO;
+        for (WorkoutExercise we : workout.getExercises()) {
+            if (we.getExercise().getLoadType() != LoadType.weighted) {
+                continue;
+            }
+            for (WorkoutSet s : we.getSets()) {
+                if (!s.isWarmup()) {
+                    volume = volume.add(s.getWeight().multiply(BigDecimal.valueOf(s.getReps())));
+                }
+            }
+        }
+        return volume;
+    }
+
+    private Integer calculateCompletionPercent(Workout workout) {
+        int planned = 0;
+        int done = 0;
+        for (WorkoutExercise we : workout.getExercises()) {
+            if (we.getPlannedSets() == null) {
+                continue;
+            }
+            planned += we.getPlannedSets();
+            done += Math.min(countWorkingSets(we), we.getPlannedSets());
+        }
+        if (planned == 0) {
+            return null;
+        }
+        return (int) Math.round(done * 100.0 / planned);
+    }
+
+    @Transactional
+    public WorkoutDetailsDto startWorkout(StartWorkoutRequestDto request) {
+        if (workoutRepository.existsByFinishedAtIsNull()) {
+            throw ConflictException.workoutAlreadyActive();
+        }
+        Workout workout;
+        WorkoutTemplate wT;
+        if (request.workoutTemplateId() != null) {
+            wT = workoutTemplateRepository.findWithExercisesById(request.workoutTemplateId())
+                    .orElseThrow(NotFoundException::template);
+            workout = workoutMapper.createFromTemplate(wT);  // врядли верно все это
+        } else {
+            String name = (request.name() == null || request.name().isBlank()) ?
+                    "Свободная тренировка" : request.name().trim();
+            workout = workoutMapper.createFree(name);
+        }
+        Workout saved = workoutRepository.save(workout);
+        return workoutMapper.toDetailsDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<WorkoutDetailsDto> getActiveWorkout() {
+        return workoutRepository.findByFinishedAtIsNull().map(workoutMapper::toDetailsDto);
+    }
+
+    @Transactional(readOnly = true)
+    public WorkoutDetailsDto getWorkout(Long id) {
+        return workoutRepository.findWithExercisesById(id)
+                .map(workoutMapper::toDetailsDto).orElseThrow(NotFoundException::workout);
+    }
+
+    @Transactional
+    public void cancelWorkout(Long workoutId) {
+        Workout workout = getOpenWorkout(workoutId);
+        workoutRepository.delete(workout);
+    }
+
+    @Transactional
+    public WorkoutExerciseDto addExercise(Long workoutId, AddWorkoutExerciseRequestDto request) {
+        Workout workout = getOpenWorkout(workoutId);
+        Exercise exercise = exerciseRepository.findById(request.exerciseId())
+                .orElseThrow(NotFoundException::exercise);
+        if (workout.getExercises().stream().anyMatch(we -> we.getExercise().getId().equals(request.exerciseId()))) {
+            throw ConflictException.workoutExerciseDuplicated();
+        }
+
+        // следующий после последнего, а не size(): после удаления упражнения из середины номера бы совпали
+        short sortOrder = (short) (workout.getExercises().stream()
+                .mapToInt(WorkoutExercise::getSortOrder).max().orElse(-1) + 1);
+        Short targetSets = request.targetSets() != null ? request.targetSets() : (short) 3;
+
+        WorkoutExercise wExercise = workoutMapper.createExercise(workout, exercise, targetSets, sortOrder);
+        workout.getExercises().add(wExercise);
+        workoutRepository.flush();
+        return workoutMapper.toExerciseDto(wExercise);
+    }
+
+    // убирает упражнение из идущей тренировки вместе с его подходами (orphanRemoval)
+    @Transactional
+    public void deleteExercise(Long workoutId, Long wExerciseId) {
+        Workout workout = getOpenWorkout(workoutId);
+        WorkoutExercise wE = findWorkoutExercise(workout, wExerciseId);
+        workout.getExercises().remove(wE);
+    }
+
+    // история: завершённые тренировки с итогами, свежие первыми
+    @Transactional(readOnly = true)
+    public List<WorkoutSummaryDto> getFinishedWorkouts(int limit) {
+        return workoutRepository.findByFinishedAtIsNotNullOrderByFinishedAtDesc(PageRequest.of(0, limit))
+                .stream().map(this::toSummary).toList();
+    }
+
+    private WorkoutSummaryDto toSummary(Workout workout) {
+        int completedSets = 0;
+        for (WorkoutExercise we : workout.getExercises()) {
+            completedSets += countWorkingSets(we);
+        }
+        long duration = Duration.between(workout.getStartedAt(), workout.getFinishedAt()).getSeconds();
+        return workoutMapper.toSummaryDto(workout, duration, calculateCompletionPercent(workout), completedSets,
+                calculateVolume(workout));
+    }
+
+    @Transactional
+    public WorkoutExerciseDto updateTargetSets(Long workoutId, Long wExerciseId, UpdateTargetSetsRequestDto request) {
+        Workout workout = getOpenWorkout(workoutId);
+        WorkoutExercise wE = findWorkoutExercise(workout, wExerciseId);
+        wE.setTargetSets(request.targetSets());
+        return workoutMapper.toExerciseDto(wE);
+
+    }
+
+    @Transactional
+    public WorkoutSetDto addSet(Long workoutId, Long wExId, AddSetRequestDto request) {
+        Workout workout = getOpenWorkout(workoutId);
+        WorkoutExercise wE = findWorkoutExercise(workout, wExId);
+        short setNumber = (short) (wE.getSets().size() + 1);
+        var set = workoutMapper.createSet(wE, request, setNumber);
+        wE.getSets().add(set);
+        workoutRepository.flush();
+        return workoutMapper.toSetDto(set);
+    }
+
+    @Transactional
+    public WorkoutSetDto updateSet(Long workoutId, Long wExId, Long setId, UpdateSetRequestDto request) {
+        Workout workout = getOpenWorkout(workoutId);
+        WorkoutExercise wE = findWorkoutExercise(workout, wExId);
+        WorkoutSet wSet = findWorkoutSet(wE, setId);
+        workoutMapper.updateSet(wSet, request);
+        return workoutMapper.toSetDto(wSet);
+    }
+
+    @Transactional
+    public void deleteSet(Long workoutId, Long wExId, Long setId) {
+        Workout workout = getOpenWorkout(workoutId);
+        WorkoutExercise wE = findWorkoutExercise(workout, wExId);
+        WorkoutSet wSet = findWorkoutSet(wE, setId);
+        if (wE.getSets().size() != wSet.getSetNumber()) {
+            throw ConflictException.setNotLast();
+        }
+        wE.getSets().remove(wSet);
+    }
+
+    @Transactional
+    public WorkoutSummaryDto finishWorkout(Long workoutId) {
+        Workout workout = getOpenWorkout(workoutId);
+        int completedSets = 0;
+        for (WorkoutExercise we : workout.getExercises()) {
+            completedSets += countWorkingSets(we);
+        }
+        if (completedSets == 0) {
+            throw new BusinessRuleException(DomainErrorCode.WORKOUT_NO_WORKING_SETS);
+        }
+
+        workout.setFinishedAt(OffsetDateTime.now());
+
+        for (WorkoutExercise we : workout.getExercises()) {
+            lastWorkingSet(we)
+                    .ifPresent(s -> we.getExercise().setWorkingWeight(s.getWeight()));
+        }
+        long duration = Duration.between(workout.getStartedAt(), workout.getFinishedAt()).getSeconds();
+
+        return workoutMapper.toSummaryDto(workout, duration,calculateCompletionPercent(workout) , completedSets,
+                calculateVolume(workout));
+    }
+}

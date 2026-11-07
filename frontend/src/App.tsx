@@ -38,7 +38,7 @@ function Header() {
             <rect width="40" height="40" rx="11" fill="#bfddf2" />
             <path d="M12 14v12M28 14v12M8 17v6M32 17v6M12 20h16" fill="none" stroke="#2f6e9e" strokeWidth="3.4" strokeLinecap="round" />
           </svg>
-          GymTracker
+          MuscleBalance
         </Link>
         <nav className="nav" aria-label="Разделы">
           <NavLink to="/" end className={navClass}>

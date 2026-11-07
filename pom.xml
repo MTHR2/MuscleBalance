@@ -8,11 +8,11 @@
         <version>4.1.2</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.gymtracker</groupId>
-    <artifactId>gym-tracker</artifactId>
+    <groupId>com.musclebalance</groupId>
+    <artifactId>muscle-balance</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Gym-tracker</name>
-    <description>Gym-tracker</description>
+    <name>MuscleBalance</name>
+    <description>MuscleBalance</description>
     <url/>
     <scm>
         <connection/>
