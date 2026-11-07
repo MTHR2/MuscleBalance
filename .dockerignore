@@ -1,0 +1,9 @@
+.git
+.idea
+.claude
+.mvn
+.env
+*.iml
+target
+frontend
+HELP.md

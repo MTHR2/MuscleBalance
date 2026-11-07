@@ -1,11 +1,4 @@
 services:
-#  app:
-#    build: .
-#    ports:
-#      - "5433:5432"
-
-
-
   postgres:
     image: postgres:17
     container_name: gymtracker-db
@@ -17,6 +10,35 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    container_name: musclebalance-app
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      APP_TIMEZONE: ${APP_TIMEZONE:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    container_name: musclebalance-web
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    depends_on:
+      - app
+    restart: unless-stopped
 
 volumes:
   pgdata:
